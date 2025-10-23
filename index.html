@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz: Objekterkennung und Bilderkennung</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: #f0f8ff;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #006994;
+    }
+
+    .quiz-container {
+      max-width: 700px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+
+    .question {
+      margin-bottom: 20px;
+    }
+
+    .question h2 {
+      font-size: 1.2em;
+      color: #004c70;
+    }
+
+    .answers button {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
+      padding: 10px;
+      border: 2px solid #006994;
+      border-radius: 10px;
+      background-color: #eaf6ff;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1em;
+    }
+
+    .answers button:hover {
+      background-color: #d0ebff;
+    }
+
+    .correct {
+      background-color: #c8f7c5 !important;
+      border-color: #3fa33f !important;
+    }
+
+    .wrong {
+      background-color: #f7c5c5 !important;
+      border-color: #a33f3f !important;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      border: 2px solid #006994;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 10;
+    }
+
+    .popup button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background-color: #006994;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #555;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>Quiz: Objekterkennung & Bilderkennung 🧠</h1>
+
+    <div class="question" data-correct="2">
+      <h2>1. Was macht ein KI-Modell zur Objekterkennung?</h2>
+      <div class="answers">
+        <button>Es verändert das Bild künstlerisch</button>
+        <button>Es zählt die Pixel im Bild</button>
+        <button>Es erkennt, welche Objekte im Bild zu sehen sind</button>
+      </div>
+    </div>
+
+    <div class="question" data-correct="1">
+      <h2>2. Welches ist ein Beispiel für Bilderkennung im Alltag?</h2>
+      <div class="answers">
+        <button>Ein Textverarbeitungsprogramm</button>
+        <button>Eine Smartphone-Gesichtserkennung</button>
+        <button>Ein Taschenrechner</button>
+      </div>
+    </div>
+
+    <div class="question" data-correct="0">
+      <h2>3. Wofür werden neuronale Netze in der Bilderkennung verwendet?</h2>
+      <div class="answers">
+        <button>Um Muster in Bildern zu erkennen</button>
+        <button>Um Musikdateien zu speichern</button>
+        <button>Um Texte zu übersetzen</button>
+      </div>
+    </div>
+
+    <div class="question" data-correct="2">
+      <h2>4. Wie nennt man den Teil eines Bildes, in dem ein Objekt erkannt wird?</h2>
+      <div class="answers">
+        <button>Farbfilter</button>
+        <button>Schriftfeld</button>
+        <button>Bounding Box</button>
+      </div>
+    </div>
+
+    <div class="question" data-correct="1">
+      <h2>5. Warum ist Datentraining wichtig für ein Erkennungsmodell?</h2>
+      <div class="answers">
+        <button>Damit es schneller rechnen kann</button>
+        <button>Damit es lernt, Objekte richtig zu erkennen</button>
+        <button>Damit es hübscher aussieht</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup" id="popup">
+    <p id="popup-text"></p>
+    <button onclick="closePopup()">OK</button>
+  </div>
+
+  <footer>© 2025 Schulprojekt: Objekterkennung & Bilderkennung</footer>
+
+  <script>
+    const questions = document.querySelectorAll('.question');
+    const popup = document.getElementById('popup');
+    const popupText = document.getElementById('popup-text');
+
+    questions.forEach((question) => {
+      const buttons = question.querySelectorAll('button');
+      const correctIndex = parseInt(question.getAttribute('data-correct'));
+
+      buttons.forEach((button, index) => {
+        button.addEventListener('click', () => {
+          // Alle Buttons deaktivieren
+          buttons.forEach(b => b.disabled = true);
+
+          if (index === correctIndex) {
+            button.classList.add('correct');
+            showPopup('Richtig! 🎉');
+          } else {
+            button.classList.add('wrong');
+            showPopup('Falsch! 😅');
+            // richtige Antwort hervorheben
+            buttons[correctIndex].classList.add('correct');
+          }
+        });
+      });
+    });
+
+    function showPopup(message) {
+      popupText.textContent = message;
+      popup.style.display = 'block';
+    }
+
+    function closePopup() {
+      popup.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
