@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steinzeit-Quiz: Frühe Menschheitsgeschichte</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Festlegen der Standard-Schriftart und einfacher Hintergrund */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Sehr helles Blau/Grau */
+            min-height: 100vh;
+        }
+
+        /* Container-Zentrierung und responsive Anpassung */
+        .quiz-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 1rem;
+        }
+
+        /* Styling für die Antwort-Buttons */
+        .answer-button {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 0.75rem;
+            border: 2px solid #cbd5e1; /* Helles Grau */
+            text-align: left;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            background-color: #f8fafc; /* Fast weiß */
+            color: #1f2937; /* Dunkles Text-Grau */
+            font-weight: 500;
+        }
+
+        .answer-button:hover:not(.correct):not(.wrong) {
+            border-color: #93c5fd; /* Leichtes Hover-Feedback in Blau */
+            background-color: #eff6ff;
+        }
+
+        /* Zustände für richtig und falsch */
+        .answer-button.correct {
+            background-color: #d1fae5; /* Hellgrün */
+            border-color: #34d399; /* Grüner Rahmen */
+            color: #065f46; /* Dunkelgrüner Text */
+            cursor: default;
+        }
+
+        .answer-button.wrong {
+            background-color: #fee2e2; /* Hellrot */
+            border-color: #f87171; /* Roter Rahmen */
+            color: #991b1b; /* Dunkelroter Text */
+            cursor: default;
+        }
+
+        .answer-button.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* Modal-Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4); /* Dunkler Hintergrund */
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content.correct-bg {
+            border-top: 10px solid #10b981; /* Smaragd-Grün */
+        }
+        .modal-content.wrong-bg {
+            border-top: 10px solid #ef4444; /* Rot */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9);}
+            to { opacity: 1; transform: scale(1);}
+        }
+
+        /* Styling für den "Nächste Frage" Button */
+        #next-button {
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #2563eb; /* Blau */
+            color: white;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #next-button:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* Styling für den Ergebnis-Bereich */
+        #results {
+            padding: 1.5rem;
+            background-color: #ecfdf5; /* Sehr helles Mint */
+            border: 1px solid #a7f3d0;
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="quiz-container">
+        <h1 class="text-3xl font-extrabold text-center text-gray-800 mb-6">
+            🌍 Steinzeit-Quiz für Entdecker
+        </h1>
+
+        <!-- Fortschrittsanzeige -->
+        <div class="mb-6 text-center text-lg font-semibold text-blue-600">
+            Frage <span id="current-question-index">1</span> von <span id="total-questions">10</span>
+        </div>
+
+        <!-- Quiz-Bereich -->
+        <div id="quiz-screen">
+            <!-- Die Fragen werden hier dynamisch eingefügt -->
+        </div>
+
+        <!-- Ergebnis-Bereich (verborgen bis zum Ende) -->
+        <div id="results" class="hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Quiz beendet! 🎉</h2>
+            <p class="text-xl text-gray-700">Du hast <span id="score-display" class="font-extrabold text-green-600">0</span> von 10 Fragen richtig beantwortet.</p>
+            <button id="restart-button" class="mt-6 px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition">
+                Neues Quiz starten
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal für Richtig/Falsch-Feedback -->
+    <div id="feedback-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="feedback-title" class="text-3xl font-bold mb-4"></h3>
+            <p id="feedback-message" class="text-gray-600 mb-6"></p>
+            <button id="close-modal-button" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                Weiter zur nächsten Frage
+            </button>
+        </div>
+    </div>
+
+
+    <script>
+        // Die Quiz-Daten basierend auf den bereitgestellten Bildern (Zeitleiste, Text)
+        const quizData = [
+            {
+                question: "Welche Epoche bezeichnet man als die gesamte Steinzeit?",
+                options: ["Epoche des Altertums", "Epoche der Urgeschichte", "Epoche des Mittelalters"],
+                correctAnswer: "Epoche der Urgeschichte",
+                source: "IMG_8191.jpg (Zeitleiste links)"
+            },
+            {
+                question: "Vor wie vielen Jahren begannen die ersten menschenartigen Wesen aufrecht zu gehen?",
+                options: ["Vor ca. 2 Millionen Jahren", "Vor ca. 4 Millionen Jahren", "Vor ca. 35.000 Jahren"],
+                correctAnswer: "Vor ca. 4 Millionen Jahren",
+                source: "IMG_8191.jpg / IMG_8194.jpg"
+            },
+            {
+                question: "Was war eine der zentralen Fähigkeiten, die der Mensch vor etwa 2 Millionen Jahren entwickelte?",
+                options: ["Er begann mit dem Ackerbau.", "Er stellte einfache Steinwerkzeuge her.", "Er verwendete Kleidung."],
+                correctAnswer: "Er stellte einfache Steinwerkzeuge her.",
+                source: "IMG_8191.jpg / IMG_8194.jpg"
+            },
+            {
+                question: "Wann lernten die Menschen laut Zeitleiste das Feuermachen?",
+                options: ["Vor ca. 9000 v. Chr.", "Ca. 150.000 – 100.000 v. Chr.", "Vor ca. 3000 v. Chr."],
+                correctAnswer: "Ca. 150.000 – 100.000 v. Chr.",
+                source: "IMG_8192.jpg"
+            },
+            {
+                question: "Wann begann laut Zeitleiste die Jungsteinzeit (Neolithikum)?",
+                options: ["Um 9000 v. Chr.", "Um 5000 v. Chr.", "Um 3000 v. Chr."],
+                correctAnswer: "Um 9000 v. Chr.",
+                source: "IMG_8193.jpg (Zeitleiste oben)"
+            },
+            {
+                question: "Was geschah um ca. 9000 v. Chr. mit den Menschen?",
+                options: ["Sie wurden sesshaft, hielten Vieh und trieben Ackerbau.", "Sie verließen ihre ursprünglichen Lebensgebiete wegen der Kälte.", "Sie verwendeten erstmals Feuer zur Nahrungsbereitung."],
+                correctAnswer: "Sie wurden sesshaft, hielten Vieh und trieben Ackerbau.",
+                source: "IMG_8192.jpg / IMG_8193.jpg"
+            },
+            {
+                question: "Was war die Urheimat der Menschheit?",
+                options: ["Europa", "Asien", "Afrika"],
+                correctAnswer: "Afrika",
+                source: "IMG_8198.jpg (VT1 Afrika – Wiege der Menschheit)"
+            },
+            {
+                question: "Wie wird die Ausbreitung des Menschen auf alle Erdteile genannt?",
+                options: ["Die Evolution", "Überleben in der Kälte", "Die Ausbreitung des Menschen"],
+                correctAnswer: "Die Ausbreitung des Menschen",
+                source: "IMG_8198.jpg (VT2 Die Ausbreitung des Menschen)"
+            },
+            {
+                question: "Wer war 'Ötzi', der im September 1991 in den Ötztaler Alpen gefunden wurde?",
+                options: ["Ein frühmittelalterlicher Händler", "Eine Gletschlerleiche aus der Jungsteinzeit", "Ein römischer Soldat"],
+                correctAnswer: "Eine Gletschlerleiche aus der Jungsteinzeit",
+                source: "IMG_8197.jpg (VT2 Was wir über Ötzi wissen)"
+            },
+            {
+                question: "Woran erkennt man laut Text, dass Ötzi durch einen Pfeil getötet wurde?",
+                options: ["Durch Wunden am Kopf und Oberschenkel", "Es wurde kein Pfeil gefunden, aber ein Messer", "Er wurde von einem Pfeil im Rücken getroffen"],
+                correctAnswer: "Er wurde von einem Pfeil im Rücken getroffen",
+                source: "IMG_8197.jpg (VT2 Was wir über Ötzi wissen)"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results');
+        const currentQuestionIndexSpan = document.getElementById('current-question-index');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const scoreDisplay = document.getElementById('score-display');
+        const restartButton = document.getElementById('restart-button');
+        const modal = document.getElementById('feedback-modal');
+        const modalContent = modal.querySelector('.modal-content');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const closeModalButton = document.getElementById('close-modal-button');
+
+        totalQuestionsSpan.textContent = quizData.length;
+
+        /**
+         * Zeigt die aktuelle Frage an.
+         */
+        function displayQuestion() {
+            // Zeigt den Quiz-Bildschirm an und versteckt die Ergebnisse
+            resultsScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+
+            answered = false;
+            const currentQuestion = quizData[currentQuestionIndex];
+            currentQuestionIndexSpan.textContent = currentQuestionIndex + 1;
+
+            let html = `
+                <div class="p-6 mb-4 bg-blue-100 border-l-4 border-blue-500 rounded-lg">
+                    <p class="text-xl font-bold text-gray-800">${currentQuestion.question}</p>
+                </div>
+                <div id="options-container" class="mt-4">
+            `;
+
+            currentQuestion.options.forEach((option, index) => {
+                html += `
+                    <button class="answer-button" data-answer="${option}">
+                        ${String.fromCharCode(65 + index)}. ${option}
+                    </button>
+                `;
+            });
+
+            html += `</div>`;
+            quizScreen.innerHTML = html;
+
+            // Event Listener für die Antwort-Buttons hinzufügen
+            document.querySelectorAll('.answer-button').forEach(button => {
+                button.addEventListener('click', handleAnswerClick);
+            });
+        }
+
+        /**
+         * Behandelt den Klick auf eine Antwort.
+         * @param {Event} event - Das Klick-Ereignis.
+         */
+        function handleAnswerClick(event) {
+            if (answered) return; // Verhindert Doppelklicks
+
+            answered = true;
+            const selectedButton = event.currentTarget;
+            const selectedAnswer = selectedButton.dataset.answer;
+            const currentQuestion = quizData[currentQuestionIndex];
+            const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+
+            // Alle Buttons deaktivieren und den ausgewählten Button hervorheben
+            document.querySelectorAll('.answer-button').forEach(button => {
+                button.classList.add('disabled');
+            });
+
+            // Visuelles Feedback
+            if (isCorrect) {
+                selectedButton.classList.add('correct');
+                score++;
+                showFeedback(true, 'Richtig!', 'Super, das ist korrekt! Die Antwort lautet: ' + currentQuestion.correctAnswer);
+            } else {
+                selectedButton.classList.add('wrong');
+                // Korrekte Antwort grün markieren
+                document.querySelectorAll('.answer-button').forEach(button => {
+                    if (button.dataset.answer === currentQuestion.correctAnswer) {
+                        button.classList.add('correct');
+                    }
+                });
+                showFeedback(false, 'Falsch!', 'Schade, das ist leider falsch. Die richtige Antwort wäre gewesen: ' + currentQuestion.correctAnswer);
+            }
+        }
+
+        /**
+         * Zeigt das Feedback-Modal an.
+         * @param {boolean} isCorrect - Gibt an, ob die Antwort richtig ist.
+         * @param {string} title - Der Titel des Popups.
+         * @param {string} message - Die Meldung des Popups.
+         */
+        function showFeedback(isCorrect, title, message) {
+            feedbackTitle.textContent = title;
+            feedbackMessage.textContent = message;
+
+            // Modal-Styling basierend auf der Korrektheit
+            modalContent.classList.remove('correct-bg', 'wrong-bg');
+            if (isCorrect) {
+                modalContent.classList.add('correct-bg');
+            } else {
+                modalContent.classList.add('wrong-bg');
+            }
+
+            modal.style.display = 'flex'; // Popup anzeigen
+        }
+
+        /**
+         * Schließt das Modal und geht zur nächsten Frage oder zu den Ergebnissen.
+         */
+        closeModalButton.addEventListener('click', () => {
+            modal.style.display = 'none'; // Popup verstecken
+
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                displayQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        /**
+         * Zeigt die Ergebnisse des Quiz an.
+         */
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            scoreDisplay.textContent = score;
+        }
+
+        /**
+         * Startet das Quiz neu.
+         */
+        restartButton.addEventListener('click', () => {
+            currentQuestionIndex = 0;
+            score = 0;
+            displayQuestion();
+        });
+
+        // Start des Quiz beim Laden der Seite
+        displayQuestion();
+    </script>
+</body>
+</html>
